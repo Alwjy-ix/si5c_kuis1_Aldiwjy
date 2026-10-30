@@ -1,10 +1,14 @@
+
 require("dotenv").config();
 
 const express = require("express");
 const cors = require("cors");
+const mongoose = require("mongoose");
 
 const logger = require("./middlewares/logger");
 const scholarshipRoutes = require("./routes/scholarshipRoutes");
+const organizerRoutes = require("./routes/organizers");
+
 const { notFound, errorHandler } = require("./middlewares/errorHandler");
 
 const app = express();
@@ -35,6 +39,7 @@ app.get("/", (req, res) => {
       "POST /scholarships",
       "PUT /scholarships/:id",
       "DELETE /scholarships/:id",
+      "POST /organizers",
     ],
   });
 });
@@ -42,15 +47,25 @@ app.get("/", (req, res) => {
 // Route scholarships
 app.use("/scholarships", scholarshipRoutes);
 
-// Error handling
+// Route organizers
+app.use("/organizers", organizerRoutes);
+
+// Error handling (harus paling bawah)
 app.use(notFound);
 app.use(errorHandler);
 
-// Menjalankan server hanya saat bukan production
-if (process.env.NODE_ENV !== "production") {
-  app.listen(PORT, () => {
-    console.log(`Server berjalan di http://localhost:${PORT}`);
+// Koneksi MongoDB
+mongoose.connect(process.env.DB_URI)
+  .then(() => {
+    console.log("Terhubung ke MongoDB");
+
+    app.listen(PORT, () => {
+      console.log(`Server berjalan di http://localhost:${PORT}`);
+    });
+  })
+  .catch((err) => {
+    console.error("Gagal terhubung:", err.message);
+    process.exit(1);
   });
-}
 
 module.exports = app;
